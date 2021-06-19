@@ -1,34 +1,88 @@
-const express = require('express')
-const app = express() 
+const sql = require('mysql')
+var express = require('express')
+var cors = require('cors')
+const{ rows } = require('mssql')
+var app = express()
 
-var sqlite3 = require('sqlite3').verbose()
-var db = new sqlite3.Database('my')
-db.serialize(function(){
-    db.run("CREATE TABLE IF NOT EXISTS data (desc TEXT)")
-    // var stmt = db.prepare("INSERT INTO data values (?)")
-    // for (var i=0; i<2; i++){
-    //     stmt.run('No' + i)
-    // }
-    //stmt.finalize()
-    db.each('SELECT desc FROM data', function(err,row){
-        console.log(row.desc)
+app.use(express.json())
+app.use(express.urlencoded())
+app.use(cors())
+
+const conn = sql.createConnection
+({
+    host:'localhost',
+    user:'root',
+    password:'',
+    database:'todo'
+})
+
+conn.connect(function(err)
+    {
+        if(err)
+            {
+                console.log(err);
+            }
+    
+        else
+            {
+                console.log("connected")
+            }
+    }
+)
+
+app.get('/',(req,res)=>{
+        res.end(`<html>  
+        <div>
+            <form method="post" action="/todo">
+            <input type ="text" name="deskripsi">
+                <button type="submit">add</button>
+            </input>
+            <form>
+        </div>
+        </html>`)
+})
+
+app.post('/todo',(req,res)=>{
+    var data = req.body.deskripsi
+    var sql1="INSERT INTO tbl_todo_list(deskripsi)VALUES('"+data+"')"
+    conn.query(sql,data,function(err,data1){
+        if(err)throw err
+        console.log("DATA HAS INSERT");
+    
+    })
+    res.end()
+})
+
+app.get('/todo',(req,res)=>{
+    conn.query("SELECT * from tbl_todo_list",(err,rows,field)=>{
+
+        if(!err)
+            {
+                res.send(rows)
+            }
+        else
+            {
+                console.log(err);
+            }
+    })
+
+})
+
+app.delete('/todo/:id',(req,res)=>{
+    conn.query("DELETE from tbl_todo_list WHERE id = '"+req.params.id+"'",(err,rows,field)=>{
+        if(!err)
+            {
+                res.send(rows)       
+            }
+        else
+            {
+                console.log(err);
+            }
     })
 })
 
-db.close()
 
-<h1>Selamat Datang di APP ToDoList </h1>
-<div>
-    <form method="POST" action="/todo">
-        <input type="text" name="list" value="<%= data.desc %>" />
-        <button onClick="add()">Add</button>
-
-        
-    </form>
-</div>
-
-app.get('/', (req,res) =>{
-    res.send(' ')    
-    function add() {
-        var a = document.getElementsByName("list")
-        var stmt = d
+var server = app.listen(3000,function(){
+    console.log('server is running..');
+    
+})
